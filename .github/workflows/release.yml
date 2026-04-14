@@ -32,15 +32,24 @@ jobs:
         "
         npm install
 
+    - name: Increase swap space
+      run: |
+        sudo swapoff -a
+        sudo fallocate -l 8G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        sudo swapon --show
+
     - name: Build shared package
       run: cd packages/shared && npx tsc
       env:
-        NODE_OPTIONS: '--max-old-space-size=8192'
+        NODE_OPTIONS: '--max-old-space-size=6144'
 
     - name: Build core package
       run: cd packages/core && npx tsc
       env:
-        NODE_OPTIONS: '--max-old-space-size=8192'
+        NODE_OPTIONS: '--max-old-space-size=6144'
 
     - name: Package build artifacts
       run: |

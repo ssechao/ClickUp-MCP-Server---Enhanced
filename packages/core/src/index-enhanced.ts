@@ -18,6 +18,8 @@ import { setupSpaceTools } from './tools/space-tools.js';
 import { setupChecklistTools } from './tools/checklist-tools.js';
 import { setupCommentTools } from './tools/comment-tools.js';
 import { setupChatTools } from './tools/chat-tools.js';
+import { setupTagTools } from './tools/tag-tools.js';
+import { setupTimeInStatusTools } from './tools/time-in-status-tools.js';
 import { setupTaskResources } from './resources/task-resources.js';
 import { setupDocResources } from './resources/doc-resources.js';
 import { setupChecklistResources } from './resources/checklist-resources.js';
@@ -67,6 +69,8 @@ class ClickUpServer {
     setupChecklistTools(this.server);
     setupCommentTools(this.server);
     setupChatTools(this.server); // Chat messaging and channels
+    setupTagTools(this.server); // Space tag CRUD + add/remove tags on tasks
+    setupTimeInStatusTools(this.server); // Time spent in each status per task
   }
 
   private setupResources() {

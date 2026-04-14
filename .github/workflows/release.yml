@@ -32,24 +32,26 @@ jobs:
         "
         npm install
 
-    - name: Increase swap space
-      run: |
-        sudo swapoff -a
-        sudo fallocate -l 8G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        sudo swapon --show
+    - name: Install SWC
+      run: npm install -D @swc/cli @swc/core
 
     - name: Build shared package
-      run: cd packages/shared && npx tsc
-      env:
-        NODE_OPTIONS: '--max-old-space-size=6144'
+      run: |
+        cd packages/shared
+        npx swc src -d build --strip-leading-paths \
+          -C module.type=es6 -C jsc.target=es2020 \
+          -C jsc.parser.syntax=typescript -C jsc.parser.decorators=true
+        # Generate declaration files with tsc (emit only .d.ts)
+        npx tsc --emitDeclarationOnly --declaration --outDir build 2>/dev/null || true
 
     - name: Build core package
-      run: cd packages/core && npx tsc
-      env:
-        NODE_OPTIONS: '--max-old-space-size=6144'
+      run: |
+        cd packages/core
+        npx swc src -d build --strip-leading-paths \
+          -C module.type=es6 -C jsc.target=es2020 \
+          -C jsc.parser.syntax=typescript -C jsc.parser.decorators=true
+        # Fix .ts extensions in imports to .js
+        find build -name '*.js' -exec sed -i 's/\.ts"/\.js"/g; s/\.ts'\''/\.js'\''/g' {} +
 
     - name: Package build artifacts
       run: |

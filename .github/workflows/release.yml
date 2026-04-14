@@ -20,36 +20,28 @@ jobs:
       with:
         node-version: '20.x'
 
-    - name: Install dependencies (no workspace hoisting)
+    - name: Install SWC and runtime deps
       run: |
-        cd packages/shared && npm install --ignore-scripts && cd ../..
-        cd packages/core && npm install --ignore-scripts && cd ../..
-        npm install --ignore-scripts @swc/cli @swc/core
+        npm init -y --silent
+        npm install @swc/cli @swc/core
+        cd packages/shared && npm install --ignore-scripts 2>/dev/null || true
+        cd ../core && npm install --ignore-scripts 2>/dev/null || true
 
-    - name: Build shared package
-      run: |
-        cd packages/shared
-        npx swc src -d build --strip-leading-paths \
-          -C module.type=es6 -C jsc.target=es2020 \
-          -C jsc.parser.syntax=typescript
+    - name: Build shared
+      run: npx swc packages/shared/src -d packages/shared/build --strip-leading-paths -C module.type=es6 -C jsc.target=es2020 -C jsc.parser.syntax=typescript
 
-    - name: Build core package
+    - name: Build core
       run: |
-        cd packages/core
-        npx swc src -d build --strip-leading-paths \
-          -C module.type=es6 -C jsc.target=es2020 \
-          -C jsc.parser.syntax=typescript
-        # Fix .ts extensions in imports to .js
-        find build -name '*.js' -exec sed -i 's/\.ts"/\.js"/g' {} +
-        find build -name '*.js' -exec sed -i "s/\.ts'/\.js'/g" {} +
+        npx swc packages/core/src -d packages/core/build --strip-leading-paths -C module.type=es6 -C jsc.target=es2020 -C jsc.parser.syntax=typescript
+        find packages/core/build -name '*.js' -exec sed -i 's/\.ts"/\.js"/g' {} +
+        find packages/core/build -name '*.js' -exec sed -i "s/\.ts'/\.js'/g" {} +
 
-    - name: Package build artifacts
+    - name: Package
       run: |
-        mkdir -p dist
-        cp -r packages/core/build dist/
-        cp packages/core/package.json dist/
-        cp -r packages/shared/build dist/shared-build
-        cd dist && tar czf ../clickup-mcp-server-${{ github.ref_name }}.tar.gz .
+        mkdir -p release
+        cp -r packages/core/build release/
+        cp packages/core/package.json release/
+        tar czf clickup-mcp-server-${{ github.ref_name }}.tar.gz -C release .
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
@@ -61,13 +53,12 @@ jobs:
 
           ```bash
           # Télécharger et extraire
+          mkdir clickup-mcp && cd clickup-mcp
           tar xzf clickup-mcp-server-${{ github.ref_name }}.tar.gz
-
-          # Installer les dépendances runtime
           npm install --omit=dev
 
           # Ajouter à Claude Code
           claude mcp add --scope user clickup \
             -e CLICKUP_API_TOKEN=VOTRE_TOKEN \
-            -- node /chemin/vers/build/index-enhanced.js
+            -- node build/index-enhanced.js
           ```

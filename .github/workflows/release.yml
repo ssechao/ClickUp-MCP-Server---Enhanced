@@ -19,45 +19,37 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-        cache: 'npm'
 
-    - name: Install dependencies
+    - name: Install dependencies (no workspace hoisting)
       run: |
-        # Remove prepare script and exclude broken intelligence package
-        node -e "
-          const p=require('./package.json');
-          delete p.scripts.prepare;
-          p.workspaces = ['packages/shared', 'packages/core'];
-          require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2));
-        "
-        npm install
-
-    - name: Install SWC
-      run: npm install -D @swc/cli @swc/core
+        cd packages/shared && npm install --ignore-scripts && cd ../..
+        cd packages/core && npm install --ignore-scripts && cd ../..
+        npm install --ignore-scripts @swc/cli @swc/core
 
     - name: Build shared package
       run: |
         cd packages/shared
         npx swc src -d build --strip-leading-paths \
           -C module.type=es6 -C jsc.target=es2020 \
-          -C jsc.parser.syntax=typescript -C jsc.parser.decorators=true
-        # Generate declaration files with tsc (emit only .d.ts)
-        npx tsc --emitDeclarationOnly --declaration --outDir build 2>/dev/null || true
+          -C jsc.parser.syntax=typescript
 
     - name: Build core package
       run: |
         cd packages/core
         npx swc src -d build --strip-leading-paths \
           -C module.type=es6 -C jsc.target=es2020 \
-          -C jsc.parser.syntax=typescript -C jsc.parser.decorators=true
+          -C jsc.parser.syntax=typescript
         # Fix .ts extensions in imports to .js
-        find build -name '*.js' -exec sed -i 's/\.ts"/\.js"/g; s/\.ts'\''/\.js'\''/g' {} +
+        find build -name '*.js' -exec sed -i 's/\.ts"/\.js"/g' {} +
+        find build -name '*.js' -exec sed -i "s/\.ts'/\.js'/g" {} +
 
     - name: Package build artifacts
       run: |
-        cd packages/core
-        tar czf ../../clickup-mcp-server-${{ github.ref_name }}.tar.gz build/ package.json
-        cd ../..
+        mkdir -p dist
+        cp -r packages/core/build dist/
+        cp packages/core/package.json dist/
+        cp -r packages/shared/build dist/shared-build
+        cd dist && tar czf ../clickup-mcp-server-${{ github.ref_name }}.tar.gz .
 
     - name: Create Release
       uses: softprops/action-gh-release@v2

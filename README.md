@@ -446,11 +446,55 @@ If you prefer to build from source:
 }
 ```
 
+### 🤖 Claude Code (CLI)
+
+#### Installation rapide
+
+```bash
+# 1. Cloner et installer les dépendances
+git clone https://github.com/ssechao/ClickUp-MCP-Server---Enhanced.git
+cd ClickUp-MCP-Server---Enhanced
+npm install --ignore-scripts
+
+# 2. Installer tsx globalement (exécution TypeScript directe, pas de build nécessaire)
+npm install -g tsx
+
+# 3. Ajouter le MCP à Claude Code
+claude mcp add --scope user clickup \
+  -e CLICKUP_API_TOKEN=YOUR_API_TOKEN_HERE \
+  -- tsx /chemin/vers/ClickUp-MCP-Server---Enhanced/packages/core/src/index-enhanced.ts
+```
+
+#### Build depuis les sources (optionnel)
+
+Le build TypeScript nécessite beaucoup de mémoire (~8 Go) à cause de la taille du projet.
+
+```bash
+# Build avec suffisamment de mémoire
+NODE_OPTIONS="--max-old-space-size=8192" npm run build:core
+
+# Puis configurer Claude Code avec le build compilé
+claude mcp add --scope user clickup \
+  -e CLICKUP_API_TOKEN=YOUR_API_TOKEN_HERE \
+  -- node /chemin/vers/ClickUp-MCP-Server---Enhanced/packages/core/build/index-enhanced.js
+```
+
+#### Vérification
+
+```bash
+# Lister les MCP connectés
+claude mcp list
+
+# Tester dans une conversation Claude Code
+# > combien j'ai de workspaces ClickUp ?
+```
+
 ### 📝 Configuration Notes
 
 * **Replace `YOUR_API_TOKEN_HERE`** with your actual ClickUp API token
 * **NPM method** requires no installation or cloning - the package is downloaded automatically
 * **Build from source** requires cloning this repository and running `npm run build`
+* **Claude Code avec tsx** : pas de build nécessaire, tsx exécute le TypeScript directement
 
 ## Configuration File Locations
 

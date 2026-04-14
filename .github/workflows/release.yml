@@ -22,10 +22,13 @@ jobs:
 
     - name: Install SWC and runtime deps
       run: |
+        # Kill the monorepo workspace config and lockfile
+        rm -f package.json package-lock.json
         npm init -y --silent
         npm install @swc/cli @swc/core
-        cd packages/shared && npm install --ignore-scripts 2>/dev/null || true
-        cd ../core && npm install --ignore-scripts 2>/dev/null || true
+        # Install per-package deps without monorepo interference
+        cd packages/shared && rm -f package-lock.json && npm install --ignore-scripts 2>/dev/null || true
+        cd ../core && rm -f package-lock.json && npm install --ignore-scripts 2>/dev/null || true
 
     - name: Build shared
       run: npx swc packages/shared/src -d packages/shared/build --strip-leading-paths -C module.type=es6 -C jsc.target=es2020 -C jsc.parser.syntax=typescript

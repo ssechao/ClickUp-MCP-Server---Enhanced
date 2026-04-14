@@ -1,0 +1,57 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install --ignore-scripts
+
+    - name: Build core package
+      run: npm run build:core
+      env:
+        NODE_OPTIONS: '--max-old-space-size=8192'
+
+    - name: Package build artifacts
+      run: |
+        cd packages/core
+        tar czf ../../clickup-mcp-server-${{ github.ref_name }}.tar.gz build/ package.json
+        cd ../..
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: clickup-mcp-server-${{ github.ref_name }}.tar.gz
+        generate_release_notes: true
+        body: |
+          ## Installation
+
+          ```bash
+          # Télécharger et extraire
+          tar xzf clickup-mcp-server-${{ github.ref_name }}.tar.gz
+
+          # Installer les dépendances runtime
+          npm install --omit=dev
+
+          # Ajouter à Claude Code
+          claude mcp add --scope user clickup \
+            -e CLICKUP_API_TOKEN=VOTRE_TOKEN \
+            -- node /chemin/vers/build/index-enhanced.js
+          ```

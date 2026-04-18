@@ -71,6 +71,35 @@ export class SpacesClient {
     const response = await this.client.get<Space>(`/space/${spaceId}`);
     return response;
   }
+
+  /**
+   * Create a new space in a workspace
+   * @param workspaceId The ID of the workspace
+   * @param params Space creation parameters
+   * @returns The created space
+   */
+  async createSpace(workspaceId: string, params: { name: string; multiple_assignees?: boolean; features?: Record<string, any> }): Promise<Space> {
+    return this.client.post(`/team/${workspaceId}/space`, params);
+  }
+
+  /**
+   * Update an existing space
+   * @param spaceId The ID of the space to update
+   * @param params Space update parameters
+   * @returns The updated space
+   */
+  async updateSpace(spaceId: string, params: { name?: string; color?: string; private?: boolean; admin_can_manage?: boolean; multiple_assignees?: boolean; features?: Record<string, any> }): Promise<Space> {
+    return this.client.put(`/space/${spaceId}`, params);
+  }
+
+  /**
+   * Delete a space
+   * @param spaceId The ID of the space to delete
+   * @returns Success response
+   */
+  async deleteSpace(spaceId: string): Promise<{ success: boolean }> {
+    return this.client.delete(`/space/${spaceId}`);
+  }
 }
 
 export const createSpacesClient = (client: ClickUpClient): SpacesClient => {

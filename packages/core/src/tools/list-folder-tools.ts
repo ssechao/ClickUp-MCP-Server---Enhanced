@@ -13,6 +13,24 @@ const foldersClient = createFoldersClient(clickUpClient);
 
 export function setupListFolderTools(server: McpServer): void {
   server.tool(
+    'clickup_get_folders',
+    'Get all folders from a ClickUp space. Returns folder details including name, lists inside each folder, and task counts. This is essential for navigating spaces where tasks are organized in folders.',
+    {
+      space_id: z.string().describe('The ID of the space to get folders from'),
+    },
+    async ({ space_id }) => {
+      try {
+        const result = await foldersClient.getFoldersFromSpace(space_id);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (error: unknown) {
+        return mcpError('getting folders', error);
+      }
+    }
+  );
+
+  server.tool(
     'clickup_get_lists',
     'Get lists from a ClickUp folder or space. Returns list details including name and content.',
     {
